@@ -1,0 +1,38 @@
+plugins {
+    id 'application'
+    id 'org.moditect.gradleplugin' version '1.0.0-rc3'
+}
+
+group   = 'com.acme'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = 'com.acme.App'
+}
+
+addMainModuleInfo {
+    version = project.version
+    jvmVersion = '11'
+    overwriteExistingFiles = true
+    jdepsExtraArgs = ['-q']
+    module {
+        mainClass = application.mainClass.get()
+        moduleInfoFile = file('src/java11/module-info.java')
+    }
+}
+
+if (!project.hasProperty('reproducibleBuild')) project.ext.reproducible = 'false'
+boolean reproducibleBuild = (project.rootProject.findProperty('reproducibleBuild') ?: false).toBoolean()
+        
+if (reproducibleBuild) {
+    tasks.withType(AbstractArchiveTask) { AbstractArchiveTask archive ->
+        archive.preserveFileTimestamps = false
+        archive.reproducibleFileOrder  = true
+        archive.dirMode  = 0755
+        archive.fileMode = 0644
+    }
+}
